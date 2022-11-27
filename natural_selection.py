@@ -7,6 +7,7 @@ import pygame
 PI = math.pi
 MAP_W = 1000
 MAP_H = 1000
+MAX_FPS = 60
 
 class Entity:
 	max_spd = 3
@@ -21,7 +22,7 @@ class Entity:
 		self._dir = dir
 		# dynamic state
 		self._spd = 0
-		self._w = 0
+		self._ang_spd = 0
 		# entity variables
 		self._energy = Entity.max_energy
 		self._split = 0
@@ -57,4 +58,36 @@ class Entity:
 		spd_y = self._spd*sin(self.dir)
 		self.x += spd_x
 		self.y += spd_y
-		self.dir += self._w
+		self.dir += self._ang_spd
+
+	def show(self):
+		pygame.draw.circle(screen,(0,0,200),(self.x,self.y),10)
+
+
+# functions
+def frame():
+	screen.fill((255,255,255))
+	tick = clock.tick(MAX_FPS)
+	for entity in entities:
+		entity.move()
+		entity.show()
+	pygame.display.update()
+	print(tick)
+
+
+pygame.init()
+screen = pygame.display.set_mode((MAP_W,MAP_H))
+pygame.display.set_caption('Simulation')
+pygame.display.update()
+clock = pygame.time.Clock()
+
+entities = np.array([])
+entity0 = Entity(MAP_W/2,MAP_H/2,0,0,0,0)
+entities = np.append(entities,entity0)
+
+running = True
+while running:
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			running = False
+	frame()
