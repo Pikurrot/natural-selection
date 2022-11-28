@@ -7,22 +7,24 @@ import pygame
 PI = math.pi
 MAP_W = 1000
 MAP_H = 1000
-MAX_FPS = 60
+MAX_FPS = 2
 
 class Entity:
-	max_spd = 3
+	max_spd = 100
 	max_w = PI/6 # radians
-	max_energy = 10
-	max_split = 10
+	max_energy = 100
+	max_split = 100
+	size = 10
+	tick = 0 # sec
 
 	def __init__(self,x,y,dir,weights,bias,hidden_neurons):
 		# kinematic state
 		self._x = x
 		self._y = y
-		self._dir = dir
+		self._dir = 0
 		# dynamic state
-		self._spd = 0
-		self._ang_spd = 0
+		self._spd = 0 # pixels/sec
+		self._ang_spd = 0 # rad/sec
 		# entity variables
 		self._energy = Entity.max_energy
 		self._split = 0
@@ -56,23 +58,27 @@ class Entity:
 	def move(self):
 		spd_x = self._spd*cos(self.dir)
 		spd_y = self._spd*sin(self.dir)
-		self.x += spd_x
-		self.y += spd_y
-		self.dir += self._ang_spd
+		self.x += spd_x*Entity.tick
+		self.y += spd_y*Entity.tick
+		self.dir += self._ang_spd*Entity.tick
+		if self.x > MAP_W: self.x = Entity.size
+		elif self.x < 0: self.x = MAP_W - Entity.size
+		if self.y > MAP_H: self.y = Entity.size
+		elif self.y < 0: self.y = MAP_H - Entity.size
 
 	def show(self):
-		pygame.draw.circle(screen,(0,0,200),(self.x,self.y),10)
+		pygame.draw.circle(screen,(0,0,200),(self.x,self.y),Entity.size)
 
 
 # functions
 def frame():
 	screen.fill((255,255,255))
-	tick = clock.tick(MAX_FPS)
+	Entity.tick = clock.tick(MAX_FPS)/1000
 	for entity in entities:
 		entity.move()
 		entity.show()
 	pygame.display.update()
-	print(tick)
+	print(Entity.tick)
 
 
 pygame.init()
