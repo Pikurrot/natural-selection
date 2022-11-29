@@ -46,10 +46,14 @@ class Entity:
 	# setters
 	@x.setter
 	def x(self,x):
-		self._x = x
+		if x > MAP_W: self._x = Entity.size
+		elif x < 0: self._x = MAP_W - Entity.size
+		else: self._x = x
 	@y.setter
 	def y(self,y):
-		self._y = y
+		if y > MAP_H: self._y = Entity.size
+		elif y < 0: self._y = MAP_H - Entity.size
+		else: self._y = y
 	@dir.setter
 	def dir(self,dir):
 		self._dir = dir
@@ -61,10 +65,6 @@ class Entity:
 		self.x += spd_x*Entity.tick
 		self.y += spd_y*Entity.tick
 		self.dir += self._ang_spd*Entity.tick
-		if self.x > MAP_W: self.x = Entity.size
-		elif self.x < 0: self.x = MAP_W - Entity.size
-		if self.y > MAP_H: self.y = Entity.size
-		elif self.y < 0: self.y = MAP_H - Entity.size
 		if self.dir > PI: self.dir -= 2*PI
 		elif self.dir < -PI: self.dir += 2*PI
 
@@ -114,6 +114,19 @@ class Prey(Entity):
 
 	def FOV(self):
 		return super().FOV(Prey)
+
+
+class Predator(Entity):
+	FOV_rays = 21 # must be odd
+	FOV_range = 500 # pixels
+	FOV_width = math.radians(50) # radians
+	Color = (200,0,0)
+
+	def __init__(self,x,y,dir,weights,bias,hidden_neurons):
+		super().__init__(self,x,y,dir,weights,bias,hidden_neurons)
+
+	def FOV(self):
+		return super().FOV(Predator)
 		
 
 # functions
@@ -130,9 +143,8 @@ def e_ang(entity1,entity2):
 def frame():
 	screen.fill((255,255,255))
 	Entity.tick = clock.tick(MAX_FPS)/1000
-	#for entity in entities:
-	entities[0].entity_tick()
-	entities[1].entity_tick()
+	for entity in entities:
+		entity.entity_tick()
 	pygame.display.update()
 
 
@@ -144,9 +156,9 @@ clock = pygame.time.Clock()
 
 entities = np.array([])
 prey0 = Prey(MAP_W/2,MAP_H/2,0,0,0,0)
-prey1 = Prey(MAP_W/2+100,MAP_H/2+100,PI,0,0,0)
+predator0 = Predator(MAP_W/2+100,MAP_H/2+100,PI,0,0,0)
 entities = np.append(entities,prey0)
-entities = np.append(entities,prey1)
+entities = np.append(entities,predator0)
 
 frame()
 running = True
