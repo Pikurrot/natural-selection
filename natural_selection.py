@@ -18,6 +18,7 @@ class Entity:
 	size = 10
 	max_tmp_spd = max_spd
 	temp_spd_dropping = max_spd
+	r_energy_spd = 0.2 # energy dropped per spd unit
 	split_impulse = max_tmp_spd*2
 	tick = 0 # sec
 
@@ -167,7 +168,8 @@ class Entity:
 		self.temp_dir = split_direction - PI
 
 	def update_properties(self):
-		self.energy -= self.spd*Entity.tick
+		self.energy -= self.spd*Entity.r_energy_spd*Entity.tick
+		print(self.energy)
 		if self.split_charge == Entity.max_split_charge:
 			self.split()
 			self.split_charge = 0
@@ -278,7 +280,7 @@ class Predator(Entity):
 		super().entity_tick()
 		self.eat_nearby_prey()
 
-		
+
 
 # functions
 def e_dis(entity1,entity2):
@@ -297,7 +299,6 @@ def frame():
 	for entity in entities:
 		entity.entity_tick()
 	pygame.display.update()
-	print(len(entities))
 
 
 
