@@ -327,21 +327,29 @@ class NeuralNetwork:
 		# make random the weight at a given position
 		self._weights[layer][row][col] = np.around(random.random(),3)
 
-	def randomize_weigth(self,layer,row):
+	def randomize_bias(self,layer,row):
 		# make random the bias at a given position
 		self._biases[layer][row] = np.around(random.random(),3)
 
 	def mutate(self):
 		# mutate a random weight or the bias
-		if random.randint(0,100) < 95: 
+		p = (.6,.2,.2)
+		r = random.choices(range(len(p)),p)
+		if r == 0: 
 			layer = random.randint(0,NeuralNetwork.n_layers)
 			row = random.randint(0,self._weights[layer].shape[0]-1)
 			col = random.randint(0,self._weights[layer].shape[1]-1)
 			self.randomize_weigth(layer,row,col)
-		else:
+		elif r == 1:
 			layer = random.randint(0,NeuralNetwork.n_layers)
 			row = random.randint(0,self._biases[layer].shape[0]-1)
-			self.randomize_weigth(layer,row)
+			self.randomize_bias(layer,row)
+		else:
+			n = random.randint(0,self._weights[layer].shape[0]-1)
+			for layer in range(NeuralNetwork.n_layers+1):
+				col = random.randint(0,self._weights[layer].shape[1]-1)
+				self.randomize_weigth(layer,n,col)
+				n = col
 
 
 # functions
