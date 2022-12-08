@@ -7,21 +7,25 @@ import copy
 
 # Constants
 PI = math.pi
-MAP_W = 1000
-MAP_H = 700
+
+MAP_W = 500*2
+MAP_H = 350*2
 MAX_FPS = 60
-MAX_PREYS = 100
-MAX_PREDATORS = 50
+MAX_PREYS = 100*4
+MAX_PREDATORS = 50*2
+STARTING_PREYS = 40*2
+STARTING_PREDATORS = 10
 
 class Entity:
-	max_spd = 50
-	max_ang_spd = radians(60) # radians
+	max_spd = 100
+	max_ang_spd = radians(30) # radians
 	max_energy = 100
 	max_split_charge = 100
 	size = 10
+	move_impulse = True
 	max_tmp_spd = max_spd
 	temp_spd_dropping = max_spd
-	r_energy_spd = 0.2 # energy dropped per spd unit
+	r_energy_spd = 0.1 # energy dropped per spd unit
 	split_impulse = max_tmp_spd*2
 	tick = 0 # sec
 
@@ -125,17 +129,16 @@ class Entity:
 			self.temp_dir = self.dir
 		else: 
 			self.temp_spd -= Entity.temp_spd_dropping * Entity.tick
-		spd_x = self.temp_spd*cos(self.temp_dir)
-		spd_y = self.temp_spd*sin(self.temp_dir)
+		spd_x = (self.temp_spd*Entity.move_impulse + self.spd*(not Entity.move_impulse))*cos(self.temp_dir)
+		spd_y = (self.temp_spd*Entity.move_impulse + self.spd*(not Entity.move_impulse))*sin(self.temp_dir)
 		self.x += spd_x*Entity.tick
 		self.y += spd_y*Entity.tick
 
 	def show(self):
 		# show entity in screen
-		if type(self) == Prey: print(self.spd,self.ang_spd)
 		pygame.draw.circle(screen,type(self).color,(self.x,self.y),Entity.size)
-		pygame.draw.circle(screen,(150,100,0),(self.x-10,self.y-10),Entity.size*(self.spd/Entity.max_spd))
-		pygame.draw.circle(screen,(0,0,100),(self.x+10,self.y-10),Entity.size*abs(self.ang_spd/Entity.max_ang_spd))
+		# pygame.draw.circle(screen,(150,100,0),(self.x-10,self.y-10),Entity.size*(self.spd/Entity.max_spd))
+		# pygame.draw.circle(screen,(0,0,100),(self.x+10,self.y-10),Entity.size*abs(self.ang_spd/Entity.max_ang_spd))
 
 	def FOV_entities(self,other_class,fov_range=None,fov_width=None):
 		# returns array of entities inside FOV
@@ -219,6 +222,9 @@ class Prey(Entity):
 		if self.spd == 0: self.energy += self.energy_recovery * Entity.tick
 		self.split_charge += Prey.split_recharge * Entity.tick
 
+	def __del__(self):
+		Prey.count -= 1
+
 
 class Predator(Entity):
 	count = 0
@@ -228,12 +234,12 @@ class Predator(Entity):
 	color = (200,0,0)
 	max_digest_charge = 10
 	digest_dropping = max_digest_charge/1
-	energy_recovery = Entity.max_energy/5
-	energy_dropping = Entity.max_energy/15
+	energy_recovery = Entity.max_energy/3
+	energy_dropping = Entity.max_energy/40
 	split_recharge = Entity.max_split_charge/2
-	split_dropping = Entity.max_split_charge/15
-	max_eat_dis = Entity.size
-	max_eat_ang = radians(10)
+	split_dropping = Entity.max_split_charge/30
+	max_eat_dis = Entity.size*1.5
+	max_eat_ang = radians(120)
 
 	def __init__(self,x,y,dir,brain,temp_spd=0,temp_dir=0):
 		super().__init__(x,y,dir,brain,temp_spd,temp_dir)
@@ -279,21 +285,23 @@ class Predator(Entity):
 	def update_properties(self):
 		super().update_properties()
 		self.energy -= Predator.energy_dropping * Entity.tick
-		#if self.energy == 0: entities.remove(self)
+		if self.energy == 0: entities.remove(self)
 		self.digest_charge -= Predator.digest_dropping * Entity.tick
 		self.split_charge -= Predator.split_dropping * Entity.tick
-		self.x,self.y = pygame.mouse.get_pos()
 
 	def entity_tick(self):
 		super().entity_tick()
 		self.eat_nearby_prey()
+
+	def __del__(self):
+		Predator.count -= 1
 
 
 class NeuralNetwork:
 	n_neurons = np.array([3,2]) # neurons x layer
 	n_layers = n_neurons.shape[0]
 
-	def __init__(self,n_inputs,n_outputs,weights=None,bias=0):
+	def __init__(self,n_inputs,n_outputs,weights=None,biases=0):
 		self._n_inputs = n_inputs
 		self._n_outputs = n_outputs
 		if weights == None:
@@ -303,20 +311,25 @@ class NeuralNetwork:
 			for l in range(NeuralNetwork.n_layers-1):
 				self._weights[l+1] = np.zeros((NeuralNetwork.n_neurons[l],NeuralNetwork.n_neurons[l+1]))
 		else: self._weights = weights
-		if bias == None: self._bias = np.around(random.random(),3)
-		else: self._bias = bias
+		self._biases = list((0,)*NeuralNetwork.n_layers)
+		for l in range(NeuralNetwork.n_layers):
+			self._biases[l] = np.zeros((NeuralNetwork.n_neurons[l],))
 
 	def outputs(self,inputs):
 		# forward propagation. Returns a (n_outputs,) matrix with outputs ranging (0.0 - 1.0)
-		outputs = np.dot(inputs,self._weights[0])+self._bias
+		outputs = activation_function1(np.dot(inputs,self._weights[0])+self._biases[0],self._weights[0].shape[0]+1)
 		for l in range(1,NeuralNetwork.n_layers+1):
-			outputs = np.dot(outputs,self._weights[l])+self._bias
-		outputs = np.array([activation_function(outputs[0]),sigmoid(outputs[1])])
+			outputs = activation_function1(np.dot(outputs,self._weights[l])+self._biases,self._weights[l].shape[0]+1)
+		outputs = np.array([outputs[0],activation_function2(outputs[1])])
 		return np.around(outputs,3)
 
 	def randomize_weigth(self,layer,row,col):
 		# make random the weight at a given position
 		self._weights[layer][row][col] = np.around(random.random(),3)
+
+	def randomize_weigth(self,layer,row):
+		# make random the bias at a given position
+		self._biases[layer][row] = np.around(random.random(),3)
 
 	def mutate(self):
 		# mutate a random weight or the bias
@@ -326,7 +339,9 @@ class NeuralNetwork:
 			col = random.randint(0,self._weights[layer].shape[1]-1)
 			self.randomize_weigth(layer,row,col)
 		else:
-			self._bias = random.random()
+			layer = random.randint(0,NeuralNetwork.n_layers)
+			row = random.randint(0,self._biases[layer].shape[0]-1)
+			self.randomize_weigth(layer,row)
 
 
 # functions
@@ -340,11 +355,11 @@ def e_ang(entity1,entity2):
 	dy = entity2.y-entity1.y
 	return math.atan2(dy,dx)
 
-def activation_function(x):
-	return 1-np.exp(-x)
+def activation_function1(x,n):
+	return x/n
 
-def sigmoid(x):
-	return 1/(1+np.exp(-x))
+def activation_function2(x):
+	return 2*x-1
 
 def frame():
 	screen.fill((255,255,255))
@@ -360,17 +375,17 @@ screen = pygame.display.set_mode((MAP_W,MAP_H))
 pygame.display.set_caption('Simulation')
 clock = pygame.time.Clock()
 
-test_brain = NeuralNetwork(Prey.FOV_rays,2)
-for _ in range(200):
-	test_brain.mutate()
-
 entities = []
-prey0 = Prey(MAP_W/2,MAP_H/2,0,test_brain)
-predator0 = Predator(MAP_W/2+100,MAP_H/2+100,PI,NeuralNetwork(Predator.FOV_rays,2))
-# predator0.spd = Entity.max_spd
-# predator0.dir = radians(-180+45)
-entities.append(prey0)
-entities.append(predator0)
+random_x = np.random.uniform(Entity.size, MAP_W-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
+random_y = np.random.uniform(Entity.size, MAP_H-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
+
+i = 0
+while i < STARTING_PREYS:
+	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays,2)))
+	i += 1
+while i < STARTING_PREYS+STARTING_PREDATORS:
+	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays,2,bias=random.random())))
+	i += 1
 
 frame()
 running = True
