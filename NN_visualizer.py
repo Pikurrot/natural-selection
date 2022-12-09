@@ -1,13 +1,9 @@
-import numpy as np
 import pygame
+import numpy as np
 
-GUI_X,GUI_Y = (1000,1000)
-
-def visualize(weights,biases):
-	pygame.init()
+def visualize(screen,weights,biases):
 	pygame.font.init()
-	screen = pygame.display.set_mode((GUI_X,GUI_Y))
-	pygame.display.set_caption('Neural Network')
+	gui_x,gui_y = screen.get_size()
 	screen.fill((255,255,255))
 
 	n_layers = len(weights)+1
@@ -15,13 +11,13 @@ def visualize(weights,biases):
 	n_outputs = weights[-1].shape[1]
 	n_neurons = [n_inputs]+[len(l) for l in biases]+[n_outputs]
 
-	x_offset = GUI_X/20
-	y_offset = GUI_Y/20
+	x_offset = gui_x/20
+	y_offset = gui_y/20
 	neuron_size = 100//max(n_neurons)
 	max_w_size = neuron_size//2
 	font = pygame.font.SysFont('Comic Sans MS', neuron_size)
-	x_sep = (GUI_X-x_offset*2)/max(n_layers-1,1)
-	y_sep = (GUI_Y-y_offset*2)/max(max(n_neurons)-1,1)
+	x_sep = (gui_x-x_offset*2)/max(n_layers-1,1)
+	y_sep = (gui_y-y_offset*2)/max(max(n_neurons)-1,1)
 
 	x_pos = [[x_offset+neuron_size+x_sep*l for _ in range(n_neurons[l])] for l in range(n_layers)]
 	y_pos = [[y_offset+y_sep*n+(y_sep/2)*(max(n_neurons)-n_neurons[l]) for n in range(n_neurons[l])] for l in range(n_layers)]
@@ -50,15 +46,19 @@ def visualize(weights,biases):
 			text = font.render(str(b), False, (0,150,0))
 			screen.blit(text, text.get_rect(center=(x,y+neuron_size+10)))
 
-	pygame.display.update()
-	running = True
-	while running:
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				running = False
+	
 
 # neurons = [15,10,13,8,5,3,2,5]
 # weights = [np.random.rand(neurons[i],neurons[i+1]) for i in range(len(neurons)-1)]
 # biases = [np.random.rand(neurons[i]) for i in range(1,len(neurons)-1)]
 
-# visualize(weights,biases)
+# pygame.init()
+# screen = pygame.display.set_mode((1000,1000))
+
+# running = True
+# while running:
+# 	for event in pygame.event.get():
+# 		if event.type == pygame.QUIT:
+# 			running = False
+# 	visualize(screen,weights,biases)
+# 	pygame.display.update()
