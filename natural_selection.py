@@ -10,13 +10,13 @@ import NN_visualizer
 PI = math.pi
 E = math.e
 
-MAP_W = 500
-MAP_H = 350
+MAP_W = 1500
+MAP_H = 800
 MAX_FPS = 60
-MAX_PREYS = 100
+MAX_PREYS = 150
 MAX_PREDATORS = 50
-STARTING_PREYS = 40
-STARTING_PREDATORS = 10
+STARTING_PREYS = 80
+STARTING_PREDATORS = 20
 
 class Entity:
 	max_spd = 100
@@ -181,12 +181,12 @@ class Entity:
 		# 	pygame.draw.line(screen, (0,0,255), (self.x,self.y), (ray_x,ray_y), max(0,int(strenght*30)))
 		return ray_strenghts
 
-	def split(self):
+	def split(self,mutate=True):
 		# create a clone entity and both impulse to opposite directions
 		if (type(self) == Prey and Prey.count == MAX_PREYS) or (type(self) == Predator and Predator.count == MAX_PREDATORS): return
 		split_direction = radians(random.randint(-180,179))
 		new_brain = copy.deepcopy(self._brain)
-		new_brain.mutate()
+		if mutate: new_brain.mutate()
 		entities.append(type(self)(self.x,self.y,self.dir,new_brain,Entity.split_impulse,split_direction))
 		self.temp_spd = Entity.split_impulse
 		self.temp_dir = split_direction - PI
@@ -246,28 +246,45 @@ class Predator(Entity):
 	color = (200,0,0)
 	max_digest_charge = 10
 	digest_dropping = max_digest_charge/1
-	energy_recovery = Entity.max_energy/3
+	energy_recovery = Entity.max_energy/2
 	energy_dropping = Entity.max_energy/40
-	split_recharge = Entity.max_split_charge/2
+	split_recharge = Entity.max_split_charge/1.5
 	split_dropping = Entity.max_split_charge/30
-	max_eat_dis = Entity.size*1.5
-	max_eat_ang = radians(120)
+	max_eat_dis = Entity.size*2
+	max_eat_ang = radians(150)
 
 	def __init__(self,x,y,dir,brain,temp_spd=0,temp_dir=0):
 		super().__init__(x,y,dir,brain,temp_spd,temp_dir)
 		self._digest_charge = 0
 		Predator.count += 1
+		self._brain.mutate()
 
 	# getters
+	@property
+	def spd(self):
+		return self._spd
+	@property
+	def temp_spd(self):
+		return self._temp_spd
 	@property
 	def digest_charge(self):
 		return self._digest_charge
 	# setters
+	@spd.setter
+	def spd(self,spd):
+		if spd < 0: self._spd = -spd
+		elif spd > Entity.max_spd: self._spd = Entity.max_spd
+		else: self._spd = spd
 	@digest_charge.setter
 	def digest_charge(self,digest_charge):
 		if digest_charge < 0: self._digest_charge = 0
 		elif digest_charge > Predator.max_digest_charge: self._digest_charge = Predator.max_digest_charge
 		else: self._digest_charge = digest_charge
+	@temp_spd.setter
+	def temp_spd(self,temp_spd):
+		if temp_spd < 0: self._temp_spd = -temp_spd
+		elif temp_spd > Entity.max_tmp_spd: self._temp_spd = Entity.max_tmp_spd
+		else: self._temp_spd = temp_spd
 
 	# methods
 	def FOV(self):
@@ -289,6 +306,8 @@ class Predator(Entity):
 		distances = np.array([e_dis(self,prey) for prey in fov_preys])
 		self.eat(fov_preys[np.argmin(distances)])
 
+	def split(self):
+		return super().split(False)
 
 	def update_properties(self):
 		super().update_properties()
