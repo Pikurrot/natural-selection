@@ -222,9 +222,6 @@ class Prey(Entity):
 		Prey.count += 1
 
 	# methods
-	def show(self):
-		return super().show()
-
 	def FOV(self):
 		return super().FOV(Predator)
 	
@@ -273,9 +270,6 @@ class Predator(Entity):
 		else: self._digest_charge = digest_charge
 
 	# methods
-	def show(self):
-		return super().show()
-
 	def FOV(self):
 		return super().FOV(Prey)
 
@@ -292,7 +286,6 @@ class Predator(Entity):
 		if self.spd == 0: return
 		fov_preys = self.FOV_entities(Prey,Predator.max_eat_dis,Predator.max_eat_ang)
 		if len(fov_preys) == 0: return
-		#print(fov_preys)
 		distances = np.array([e_dis(self,prey) for prey in fov_preys])
 		self.eat(fov_preys[np.argmin(distances)])
 
