@@ -325,7 +325,8 @@ class NeuralNetwork:
 		# forward propagation. Returns a (2,) matrix with outputs ranging (0.0 - 1.0)
 		outputs = activation_function(np.dot(inputs,self._weights[0])+self._biases[0])
 		for l in range(1,NeuralNetwork.n_layers+1):
-			outputs = activation_function(np.dot(outputs,self._weights[l])+self._biases[l])
+			outputs = np.dot(outputs,self._weights[l])+self._biases[l]
+			if l != NeuralNetwork.n_layers: outputs = activation_function(outputs)
 		outputs = np.array([activation_function_s(outputs[0]),activation_function_w(outputs[1])])
 		return np.around(outputs,3)
 
