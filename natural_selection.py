@@ -24,7 +24,7 @@ class Entity:
 	max_energy = 100
 	max_split_charge = 100
 	size = 10
-	move_impulse = True
+	move_impulse = False
 	max_tmp_spd = max_spd
 	temp_spd_dropping = max_spd
 	r_energy_spd = 0.1 # energy dropped per spd unit
@@ -127,18 +127,24 @@ class Entity:
 	def move(self):
 		# move entity x, y and dir
 		self.dir += self._ang_spd*Entity.tick
+		if self.temp_spd > 0:
+			self.temp_spd -= min(Entity.temp_spd_dropping * Entity.tick, self.temp_spd)
+		elif self.temp_spd < 0:
+			self.temp_spd += min(Entity.temp_spd_dropping * Entity.tick, -self.temp_spd)
 		if Entity.move_impulse:
 			if self.temp_spd == 0:
 				self.temp_spd = self.spd
 				self.temp_dir = self.dir
-			elif self.temp_spd > 0:
-				self.temp_spd -= min(Entity.temp_spd_dropping * Entity.tick, self.temp_spd)
-			else:
-				self.temp_spd += min(Entity.temp_spd_dropping * Entity.tick, -self.temp_spd)
+			spd_x = self.temp_spd*cos(self.temp_dir)
+			spd_y = self.temp_spd*sin(self.temp_dir)
 		else:
-			self.temp_spd = self.spd
-		spd_x = self.temp_spd*cos(self.temp_dir)
-		spd_y = self.temp_spd*sin(self.temp_dir)
+			if self.temp_spd != 0:
+				spd_x = self.temp_spd*cos(self.temp_dir)
+				spd_y = self.temp_spd*sin(self.temp_dir)
+			else:
+				spd_x = self.spd*cos(self.dir)
+				spd_y = self.spd*sin(self.dir)
+		
 		self.x += spd_x*Entity.tick
 		self.y += spd_y*Entity.tick
 
