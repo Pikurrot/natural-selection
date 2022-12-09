@@ -10,12 +10,12 @@ import NN_visualizer
 PI = math.pi
 E = math.e
 
-MAP_W = 500*2
-MAP_H = 350*2
-MAX_FPS = 2
-MAX_PREYS = 100*4
-MAX_PREDATORS = 50*2
-STARTING_PREYS = 40*2
+MAP_W = 500
+MAP_H = 350
+MAX_FPS = 60
+MAX_PREYS = 100
+MAX_PREDATORS = 50
+STARTING_PREYS = 40
 STARTING_PREDATORS = 10
 
 class Entity:
@@ -99,16 +99,17 @@ class Entity:
 		else: self._temp_dir = temp_dir
 	@spd.setter
 	def spd(self,spd):
-		if spd < 0: self._spd = 0
+		if spd < -Entity.max_spd: self._spd = -Entity.max_spd
 		elif spd > Entity.max_spd: self._spd = Entity.max_spd
 		else: self._spd = spd
 	@ang_spd.setter
 	def ang_spd(self,ang_spd):
-		if abs(ang_spd) > Entity.max_ang_spd: self._ang_spd = math.copysign(Entity.max_ang_spd,ang_spd)
+		if ang_spd < -Entity.max_ang_spd: self._ang_spd = -Entity.max_ang_spd
+		elif ang_spd > Entity.max_ang_spd: self._ang_spd = Entity.max_ang_spd
 		else: self._ang_spd = ang_spd
 	@temp_spd.setter
 	def temp_spd(self,temp_spd):
-		if temp_spd < 0: self._temp_spd = 0
+		if temp_spd < -Entity.max_tmp_spd: self._temp_spd = -Entity.max_tmp_spd
 		elif temp_spd > Entity.max_tmp_spd: self._temp_spd = Entity.max_tmp_spd
 		else: self._temp_spd = temp_spd
 	@energy.setter
@@ -126,19 +127,25 @@ class Entity:
 	def move(self):
 		# move entity x, y and dir
 		self.dir += self._ang_spd*Entity.tick
-		if self.temp_spd == 0:
+		if Entity.move_impulse:
+			if self.temp_spd == 0:
+				self.temp_spd = self.spd
+				self.temp_dir = self.dir
+			elif self.temp_spd > 0:
+				self.temp_spd -= min(Entity.temp_spd_dropping * Entity.tick, self.temp_spd)
+			else:
+				self.temp_spd += min(Entity.temp_spd_dropping * Entity.tick, -self.temp_spd)
+		else:
 			self.temp_spd = self.spd
-			self.temp_dir = self.dir
-		else: 
-			self.temp_spd -= Entity.temp_spd_dropping * Entity.tick
-		spd_x = (self.temp_spd*Entity.move_impulse + self.spd*(not Entity.move_impulse))*cos(self.temp_dir)
-		spd_y = (self.temp_spd*Entity.move_impulse + self.spd*(not Entity.move_impulse))*sin(self.temp_dir)
+		spd_x = self.temp_spd*cos(self.temp_dir)
+		spd_y = self.temp_spd*sin(self.temp_dir)
 		self.x += spd_x*Entity.tick
 		self.y += spd_y*Entity.tick
 
 	def show(self):
 		# show entity in screen
 		pygame.draw.circle(screen,type(self).color,(self.x,self.y),Entity.size)
+		pygame.draw.line(screen,type(self).color,(self.x,self.y),(self.x+cos(self.dir)*Entity.size*1.5,self.y+sin(self.dir)*Entity.size*1.5))
 		# pygame.draw.circle(screen,(150,100,0),(self.x-10,self.y-10),Entity.size*(self.spd/Entity.max_spd))
 		# pygame.draw.circle(screen,(0,0,100),(self.x+10,self.y-10),Entity.size*abs(self.ang_spd/Entity.max_ang_spd))
 
@@ -318,16 +325,14 @@ class NeuralNetwork:
 			for l in range(NeuralNetwork.n_layers):
 				self._biases[l] = np.zeros((NeuralNetwork.n_neurons[l],))
 		else: self._biases = biases
-		print(self._weights)
-		print(self._biases)
 
 	def outputs(self,inputs):
 		# forward propagation. Returns a (2,) matrix with outputs ranging (0.0 - 1.0)
-		outputs = activation_function(np.dot(inputs,self._weights[0])+self._biases[0])
+		outputs = activation_function1(np.dot(inputs,self._weights[0])+self._biases[0])
 		for l in range(1,NeuralNetwork.n_layers+1):
 			outputs = np.dot(outputs,self._weights[l])+self._biases[l]
-			if l != NeuralNetwork.n_layers: outputs = activation_function(outputs)
-		outputs = np.array([activation_function_s(outputs[0]),activation_function_w(outputs[1])])
+			if l != NeuralNetwork.n_layers: outputs = activation_function1(outputs)
+		outputs = activation_function2(outputs)
 		return np.around(outputs,3)
 
 	def randomize_weigth(self,layer,row,col):
@@ -370,26 +375,18 @@ def e_ang(entity1,entity2):
 	dy = entity2.y-entity1.y
 	return math.atan2(dy,dx)
 
-def activation_function(x):
+def activation_function1(x):
 	return 1/(1+E**x)
 
-def activation_function_s(x):
-	return 1-100**(-x**2)
-
-def activation_function_w(x):
-	return (10**x-10**(-x))/(10**x+10**(-x))
+def activation_function2(x):
+	return (E**x-E**(-x))/(E**x+E**(-x))
 
 def frame():
-	# screen.fill((255,255,255))
-	# Entity.tick = clock.tick(MAX_FPS)/1000
-	# for entity in entities:
-	# 	entity.entity_tick()
-	# pygame.display.update()
-	clock.tick(MAX_FPS)/1000
-	NN_visualizer.visualize(screen,nn._weights,nn._biases,np.array([0,0,1,0,0]),nn.outputs(np.array([0,0,1,0,0])))
+	screen.fill((255,255,255))
+	Entity.tick = clock.tick(MAX_FPS)/1000
+	for entity in entities:
+		entity.entity_tick()
 	pygame.display.update()
-	nn.mutate()
-	print(nn.outputs(np.array([0,0,1,0,0])))
 
 
 pygame.init()
@@ -401,15 +398,13 @@ entities = []
 random_x = np.random.uniform(Entity.size, MAP_W-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
 random_y = np.random.uniform(Entity.size, MAP_H-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
 
-# i = 0
-# while i < STARTING_PREYS:
-# 	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays)))
-# 	i += 1
-# while i < STARTING_PREYS+STARTING_PREDATORS:
-# 	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays)))
-# 	i += 1
-
-nn = NeuralNetwork(5)
+i = 0
+while i < STARTING_PREYS:
+	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays)))
+	i += 1
+while i < STARTING_PREYS+STARTING_PREDATORS:
+	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays)))
+	i += 1
 
 frame()
 running = True
