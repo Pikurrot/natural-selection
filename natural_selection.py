@@ -4,13 +4,15 @@ from math import sin,cos,radians
 import pygame
 import random
 import copy
+import NN_visualizer
 
 # Constants
 PI = math.pi
+E = math.e
 
 MAP_W = 500*2
 MAP_H = 350*2
-MAX_FPS = 60
+MAX_FPS = 2
 MAX_PREYS = 100*4
 MAX_PREDATORS = 50*2
 STARTING_PREYS = 40*2
@@ -298,43 +300,47 @@ class Predator(Entity):
 
 
 class NeuralNetwork:
-	n_neurons = np.array([3,2]) # neurons x layer
+	n_neurons = np.array([3]) # neurons x layer
 	n_layers = n_neurons.shape[0]
 
-	def __init__(self,n_inputs,n_outputs,weights=None,biases=0):
+	def __init__(self,n_inputs,weights=None,biases=None):
 		self._n_inputs = n_inputs
-		self._n_outputs = n_outputs
 		if weights == None:
 			self._weights = list((0,)*(NeuralNetwork.n_layers+1))
 			self._weights[0] = np.zeros((self._n_inputs,NeuralNetwork.n_neurons[0]))
-			self._weights[-1] = np.zeros((NeuralNetwork.n_neurons[-1],self._n_outputs))
+			self._weights[-1] = np.zeros((NeuralNetwork.n_neurons[-1],2))
 			for l in range(NeuralNetwork.n_layers-1):
 				self._weights[l+1] = np.zeros((NeuralNetwork.n_neurons[l],NeuralNetwork.n_neurons[l+1]))
 		else: self._weights = weights
-		self._biases = list((0,)*NeuralNetwork.n_layers)
-		for l in range(NeuralNetwork.n_layers):
-			self._biases[l] = np.zeros((NeuralNetwork.n_neurons[l],))
+		if biases == None:
+			self._biases = list((0,)*(NeuralNetwork.n_layers+1))
+			self._biases[-1] = np.zeros((2,))
+			for l in range(NeuralNetwork.n_layers):
+				self._biases[l] = np.zeros((NeuralNetwork.n_neurons[l],))
+		else: self._biases = biases
+		print(self._weights)
+		print(self._biases)
 
 	def outputs(self,inputs):
-		# forward propagation. Returns a (n_outputs,) matrix with outputs ranging (0.0 - 1.0)
-		outputs = activation_function1(np.dot(inputs,self._weights[0])+self._biases[0],self._weights[0].shape[0]+1)
+		# forward propagation. Returns a (2,) matrix with outputs ranging (0.0 - 1.0)
+		outputs = activation_function(np.dot(inputs,self._weights[0])+self._biases[0])
 		for l in range(1,NeuralNetwork.n_layers+1):
-			outputs = activation_function1(np.dot(outputs,self._weights[l])+self._biases,self._weights[l].shape[0]+1)
-		outputs = np.array([outputs[0],activation_function2(outputs[1])])
+			outputs = activation_function(np.dot(outputs,self._weights[l])+self._biases[l])
+		outputs = np.array([activation_function_s(outputs[0]),activation_function_w(outputs[1])])
 		return np.around(outputs,3)
 
 	def randomize_weigth(self,layer,row,col):
 		# make random the weight at a given position
-		self._weights[layer][row][col] = np.around(random.random(),3)
+		self._weights[layer][row][col] = np.around(random.uniform(-1,1),3)
 
 	def randomize_bias(self,layer,row):
 		# make random the bias at a given position
-		self._biases[layer][row] = np.around(random.random(),3)
+		self._biases[layer][row] = np.around(random.uniform(-1,1),3)
 
 	def mutate(self):
 		# mutate a random weight or the bias
 		p = (.6,.2,.2)
-		r = random.choices(range(len(p)),p)
+		r = random.choices(range(len(p)),p)[0]
 		if r == 0: 
 			layer = random.randint(0,NeuralNetwork.n_layers)
 			row = random.randint(0,self._weights[layer].shape[0]-1)
@@ -345,7 +351,7 @@ class NeuralNetwork:
 			row = random.randint(0,self._biases[layer].shape[0]-1)
 			self.randomize_bias(layer,row)
 		else:
-			n = random.randint(0,self._weights[layer].shape[0]-1)
+			n = random.randint(0,self._weights[0].shape[0]-1)
 			for layer in range(NeuralNetwork.n_layers+1):
 				col = random.randint(0,self._weights[layer].shape[1]-1)
 				self.randomize_weigth(layer,n,col)
@@ -363,19 +369,26 @@ def e_ang(entity1,entity2):
 	dy = entity2.y-entity1.y
 	return math.atan2(dy,dx)
 
-def activation_function1(x,n):
-	return x/n
+def activation_function(x):
+	return 1/(1+E**x)
 
-def activation_function2(x):
-	return 2*x-1
+def activation_function_s(x):
+	return 1-100**(-x**2)
+
+def activation_function_w(x):
+	return (10**x-10**(-x))/(10**x+10**(-x))
 
 def frame():
-	screen.fill((255,255,255))
-	Entity.tick = clock.tick(MAX_FPS)/1000
-	for entity in entities:
-		entity.entity_tick()
+	# screen.fill((255,255,255))
+	# Entity.tick = clock.tick(MAX_FPS)/1000
+	# for entity in entities:
+	# 	entity.entity_tick()
+	# pygame.display.update()
+	clock.tick(MAX_FPS)/1000
+	NN_visualizer.visualize(screen,nn._weights,nn._biases,np.array([0,0,1,0,0]),nn.outputs(np.array([0,0,1,0,0])))
 	pygame.display.update()
-
+	nn.mutate()
+	print(nn.outputs(np.array([0,0,1,0,0])))
 
 
 pygame.init()
@@ -387,13 +400,15 @@ entities = []
 random_x = np.random.uniform(Entity.size, MAP_W-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
 random_y = np.random.uniform(Entity.size, MAP_H-Entity.size, size=STARTING_PREYS+STARTING_PREDATORS)
 
-i = 0
-while i < STARTING_PREYS:
-	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays,2)))
-	i += 1
-while i < STARTING_PREYS+STARTING_PREDATORS:
-	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays,2,bias=random.random())))
-	i += 1
+# i = 0
+# while i < STARTING_PREYS:
+# 	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays)))
+# 	i += 1
+# while i < STARTING_PREYS+STARTING_PREDATORS:
+# 	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays)))
+# 	i += 1
+
+nn = NeuralNetwork(5)
 
 frame()
 running = True
