@@ -1,5 +1,6 @@
 # pragma once
 
-class Entity {
-	
+class Entity
+{
+
 };

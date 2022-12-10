@@ -1,5 +1,6 @@
 #include "entity.h"
 
-int main() {
+int main()
+{
 
 }

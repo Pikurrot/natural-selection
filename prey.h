@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 
-class Prey : Entity {
+class Prey : Entity
+{
 
 };
