@@ -27,11 +27,11 @@ class Entity:
 	move_impulse = False
 	max_tmp_spd = max_spd
 	temp_spd_dropping = max_spd
-	r_energy_spd = 0.1 # energy dropped per spd unit
+	r_energy_spd = 0.05 # energy dropped per spd unit
 	split_impulse = max_tmp_spd*2
 	tick = 0 # sec
 
-	def __init__(self,x,y,dir,brain,temp_spd=0,temp_dir=0):
+	def __init__(self,x,y,dir,brain,generation,temp_spd=0,temp_dir=0):
 		# kinematic state
 		self._x = x # pixels
 		self._y = y # pixels
@@ -44,6 +44,7 @@ class Entity:
 		# entity variables
 		self._energy = Entity.max_energy
 		self._split_charge = 0
+		self._generation = generation
 		# brain
 		self._brain = brain
 	
@@ -187,7 +188,7 @@ class Entity:
 		split_direction = radians(random.randint(-180,179))
 		new_brain = copy.deepcopy(self._brain)
 		if mutate: new_brain.mutate()
-		entities.append(type(self)(self.x,self.y,self.dir,new_brain,Entity.split_impulse,split_direction))
+		entities.append(type(self)(self.x,self.y,self.dir,new_brain,self._generation+1,Entity.split_impulse,split_direction))
 		self.temp_spd = Entity.split_impulse
 		self.temp_dir = split_direction - PI
 
@@ -214,10 +215,10 @@ class Prey(Entity):
 	color = (0,200,0)
 	minimum_rest = Entity.max_energy/8
 	energy_recovery = Entity.max_energy/20
-	split_recharge = Entity.max_split_charge/10
+	split_recharge = Entity.max_split_charge/15
 
-	def __init__(self,x,y,dir,brain,temp_spd=0,temp_dir=0):
-		super().__init__(x,y,dir,brain,temp_spd,temp_dir)
+	def __init__(self,x,y,dir,brain,generation,temp_spd=0,temp_dir=0):
+		super().__init__(x,y,dir,brain,generation,temp_spd,temp_dir)
 		self.rest = False
 		Prey.count += 1
 
@@ -246,15 +247,15 @@ class Predator(Entity):
 	color = (200,0,0)
 	max_digest_charge = 10
 	digest_dropping = max_digest_charge/1
-	energy_recovery = Entity.max_energy/2
-	energy_dropping = Entity.max_energy/40
-	split_recharge = Entity.max_split_charge/1.5
-	split_dropping = Entity.max_split_charge/30
+	energy_recovery = Entity.max_energy/4
+	energy_dropping = Entity.max_energy/30
+	split_recharge = Entity.max_split_charge/3
+	split_dropping = Entity.max_split_charge/20
 	max_eat_dis = Entity.size*2
-	max_eat_ang = radians(150)
+	max_eat_ang = radians(120)
 
-	def __init__(self,x,y,dir,brain,temp_spd=0,temp_dir=0):
-		super().__init__(x,y,dir,brain,temp_spd,temp_dir)
+	def __init__(self,x,y,dir,brain,generation,temp_spd=0,temp_dir=0):
+		super().__init__(x,y,dir,brain,generation,temp_spd,temp_dir)
 		self._digest_charge = 0
 		Predator.count += 1
 		self._brain.mutate()
@@ -314,7 +315,8 @@ class Predator(Entity):
 		self.energy -= Predator.energy_dropping * Entity.tick
 		if self.energy == 0: entities.remove(self)
 		self.digest_charge -= Predator.digest_dropping * Entity.tick
-		self.split_charge -= Predator.split_dropping * Entity.tick
+		if self._generation < 3: self.split_charge += Predator.split_dropping * Entity.tick
+		else: self.split_charge -= Predator.split_dropping * Entity.tick
 
 	def entity_tick(self):
 		super().entity_tick()
@@ -418,10 +420,10 @@ random_y = np.random.uniform(Entity.size, MAP_H-Entity.size, size=STARTING_PREYS
 
 i = 0
 while i < STARTING_PREYS:
-	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays)))
+	entities.append(Prey(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Prey.FOV_rays),0))
 	i += 1
 while i < STARTING_PREYS+STARTING_PREDATORS:
-	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays)))
+	entities.append(Predator(random_x[i],random_y[i],radians(random.randint(-180,179)),NeuralNetwork(Predator.FOV_rays),0))
 	i += 1
 
 frame()
