@@ -1,1 +1,7 @@
-*.vs
+*.sln
+*.vcxproj
+*.filters
+*.user
+Debug
+__pycache__
+.vs

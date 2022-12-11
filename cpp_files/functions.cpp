@@ -1,10 +1,6 @@
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "functions.h"
-#include <cmath>
-
-inline double deg2rad(double deg)
-{
-	return deg*180/M_PI;
-}
 
 inline double activationFunction1(double x)
 {
