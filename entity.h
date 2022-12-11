@@ -1,4 +1,5 @@
 # pragma once
+#include "functions.h"
 
 class Entity
 {
@@ -10,7 +11,7 @@ protected:
 	static constexpr double max_split_charge	= 100;
 private:
 	static constexpr double max_spd				= 100;
-	static constexpr double max_ang_spd			= radians(30); // radians
+	static constexpr double max_ang_spd			= deg2rad(30); // radians
 	static constexpr bool   move_impulse		= false;
 	static constexpr double max_tmp_spd			= max_spd;
 	static constexpr double temp_spd_dropping	= max_spd;
