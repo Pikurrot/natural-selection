@@ -36,11 +36,11 @@ class Entity:
 		self._x = x # pixels
 		self._y = y # pixels
 		self._dir = dir # rad (between PI and -PI)
-		self.temp_dir = temp_dir # rad (between PI and -PI)
+		self._temp_dir = temp_dir # rad (between PI and -PI)
 		# dynamic state
 		self._spd = 0 # pixels/sec
 		self._ang_spd = 0 # rad/sec
-		self.temp_spd = temp_spd # pixels/sec
+		self._temp_spd = temp_spd # pixels/sec
 		# entity variables
 		self._energy = Entity.max_energy
 		self._split_charge = 0
