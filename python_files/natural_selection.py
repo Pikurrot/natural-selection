@@ -25,10 +25,10 @@ class Entity:
 	max_split_charge = 100
 	size = 10
 	move_impulse = False
-	max_tmp_spd = max_spd
+	max_temp_spd = max_spd
 	temp_spd_dropping = max_spd
 	r_energy_spd = 0.05 # energy dropped per spd unit
-	split_impulse = max_tmp_spd*2
+	split_impulse = max_temp_spd*2
 	tick = 0 # sec
 
 	def __init__(self,x,y,dir,brain,generation,temp_spd=0,temp_dir=0):
@@ -110,8 +110,8 @@ class Entity:
 		else: self._ang_spd = ang_spd
 	@temp_spd.setter
 	def temp_spd(self,temp_spd):
-		if temp_spd < -Entity.max_tmp_spd: self._temp_spd = -Entity.max_tmp_spd
-		elif temp_spd > Entity.max_tmp_spd: self._temp_spd = Entity.max_tmp_spd
+		if temp_spd < -Entity.max_temp_spd: self._temp_spd = -Entity.max_temp_spd
+		elif temp_spd > Entity.max_temp_spd: self._temp_spd = Entity.max_temp_spd
 		else: self._temp_spd = temp_spd
 	@energy.setter
 	def energy(self,energy):
@@ -284,7 +284,7 @@ class Predator(Entity):
 	@temp_spd.setter
 	def temp_spd(self,temp_spd):
 		if temp_spd < 0: self._temp_spd = -temp_spd
-		elif temp_spd > Entity.max_tmp_spd: self._temp_spd = Entity.max_tmp_spd
+		elif temp_spd > Entity.max_temp_spd: self._temp_spd = Entity.max_temp_spd
 		else: self._temp_spd = temp_spd
 
 	# methods
