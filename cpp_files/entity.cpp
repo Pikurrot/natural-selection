@@ -2,7 +2,7 @@
 #include "entity.h"
 #include "constants.h"
 
-Entity::Entity(int x, int y, float dir, NeuralNetwork brain, int generation, int temp_spd, float temp_dir)
+Entity::Entity(int x, int y, float dir, NeuralNetwork* brain, int generation, int temp_spd, float temp_dir)
 {
 	this->x = x;
 	this->y = y;
@@ -17,6 +17,7 @@ Entity::Entity(int x, int y, float dir, NeuralNetwork brain, int generation, int
 	split_charge = 0;
 }
 
+// Properties
 int Entity::getX() { return x; }
 void Entity::setX(int x)
 {
@@ -81,4 +82,46 @@ void Entity::setSplitCharge(int split_charge)
 	if (split_charge < 0) this->split_charge = 0;
 	else if (split_charge > max_split_charge) this->split_charge = max_split_charge;
 	else this->split_charge = split_charge;
+}
+
+// Methods
+void Entity::move()
+{
+	// move entity x, y and dir
+	int spd_x, spd_y;
+	setDir(dir + ang_spd);
+	if (temp_spd > 0)
+		setTempSpd(temp_spd - min(temp_spd_dropping, temp_spd));
+	else if (temp_spd < 0)
+		setTempSpd(temp_spd + min(temp_spd_dropping, -temp_spd));
+	if (move_impulse)
+	{
+		if (temp_spd == 0)
+		{
+			setTempSpd(spd);
+			setTempDir(dir);
+		}
+		spd_x = temp_spd * cos(temp_dir);
+		spd_y = temp_spd * sin(temp_dir);
+	}
+	else
+	{
+		if (temp_spd != 0)
+		{
+			spd_x = temp_spd * cos(temp_dir);
+			spd_y = temp_spd * sin(temp_dir);
+		}
+		else
+		{
+			spd_x = spd * cos(dir);
+			spd_y = spd * sin(dir);
+		}
+	}
+	setX(x + spd_x);
+	setY(y * spd_y);
+}
+
+void Entity::updateProperties()
+{
+	
 }

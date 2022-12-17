@@ -13,8 +13,8 @@ E = math.e
 MAP_W = 1500
 MAP_H = 800
 MAX_FPS = 60
-MAX_PREYS = 150
-MAX_PREDATORS = 50
+MAX_PREYS = 250
+MAX_PREDATORS = 100
 STARTING_PREYS = 80
 STARTING_PREDATORS = 20
 
@@ -396,7 +396,7 @@ def e_ang(entity1,entity2):
 	return math.atan2(dy,dx)
 
 def activation_function1(x):
-	return 1/(1+E**x)
+	return 1/(1+E**(-x))
 
 def activation_function2(x):
 	return (E**x-E**(-x))/(E**x+E**(-x))

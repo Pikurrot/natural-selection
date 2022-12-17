@@ -1,16 +1,18 @@
 # pragma once
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <vector>
 #include "functions.h"
 #include "neural_network.h"
+
+using namespace std;
 
 class Entity
 {
 public:
 	static constexpr int    size				= 10;
-	static int              tick; // sec
 
-	Entity(int x, int y, float dir, NeuralNetwork brain, int generation = 0, int temp_spd = 0, float temp_dir = 0);
+	Entity(int x, int y, float dir, NeuralNetwork* brain, int generation = 0, int temp_spd = 0, float temp_dir = 0);
 
 	// getters
 	int getX();
@@ -39,7 +41,7 @@ protected:
 	int generation;
 
 	// brain
-	NeuralNetwork brain;
+	NeuralNetwork* brain;
 
 	// setters
 	void setX(int x);
@@ -52,11 +54,20 @@ protected:
 	void setEnergy(int energy);
 	void setSplitCharge(int split_charge);
 
+	// methods
+	void move();
+	virtual void show() = 0;
+	virtual vector<Entity> fovEntities() = 0;
+	virtual vector<float> fov() = 0;
+	//virtual void split(bool mutate = true);
+	virtual void updateProperties();
+	//virtual void entityTick();
+
 private:
 	static constexpr int	max_spd				= 100;
 	static constexpr float	max_ang_spd			= 30 * M_PI * 180; // radians
 	static constexpr bool	move_impulse		= false;
-	static constexpr int	max_temp_spd			= max_spd;
+	static constexpr int	max_temp_spd		= max_spd;
 	static constexpr int	temp_spd_dropping	= max_temp_spd;
 	static constexpr float	r_energy_spd		= 0.05; // energy dropped per spd unit
 	static constexpr int	split_impulse		= max_temp_spd * 2;
