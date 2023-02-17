@@ -1,12 +1,18 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <vector>
 #include <cstdlib>
 #include <ctime>
 #include <random>
+#include <iostream>
+#include <string>
+#include <Eigen/Dense>
+#include <chrono>
+#include "constants.h"
 #include "functions.h"
 
 using namespace std;
+
+chrono::high_resolution_clock::time_point start_time;
 
 float random(float a, float b)
 {
@@ -24,7 +30,19 @@ int randint(int a, int b)
 	return dis(gen);
 }
 
-vector<float> random_choices(vector<float> &items, vector<float> &weights, int k)
+float randomChoice(vector<float> &items, vector<float> &weights)
+{
+	float choice;
+
+	mt19937 rng(random_device{}());
+	discrete_distribution<> dist(weights.begin(), weights.end());
+
+	choice = items[dist(rng)];
+
+	return choice;
+}
+
+vector<float> randomChoices(vector<float> &items, vector<float> &weights, int k)
 {
 	vector<float> choices;
 
@@ -78,7 +96,6 @@ vector<float> matMul(vector<float> &a, vector<vector<float>> &b)
 			result[i] += a[j] * b[j][i];
 		}
 	}
-
 	return result;
 }
 
@@ -90,13 +107,28 @@ vector<float> vecSum(vector<float> &a, vector<float> &b)
 	{
 		result.push_back(a[i] + b[i]);
 	}
-
 	return result;
+}
+
+float dis(float x1, float y1, float x2, float y2)
+{
+	float dx = x2 - x1;
+	float dy = y2 - y1;
+	return sqrtf(dx * dx + dy * dy);
+}
+
+float ang(float x1, float y1, float x2, float y2)
+{
+	float dx = x2 - x1;
+	float dy = y2 - y1;
+	return atan2f(dy, dx);
 }
 
 void activationFunction1(float &x)
 {
-	x = 1/(1+pow(M_E,-x));
+	// x = 1/(1+pow(M_E,-x));
+	float a = 2.5;
+	x = (pow(a, x) - pow(a, -x)) / (pow(a, x) + pow(a, -x));
 }
 
 void activationFunction1(vector<float> &arr)
@@ -109,7 +141,8 @@ void activationFunction1(vector<float> &arr)
 
 void activationFunction2(float &x)
 {
-	x = (pow(M_E,x)-pow(M_E,-x))/(pow(M_E,x)+pow(M_E,-x));
+	float a = 2;
+	x = (pow(a,x)-pow(a,-x))/(pow(a,x)+pow(a,-x));
 }
 
 void activationFunction2(vector<float> &arr)
@@ -118,4 +151,23 @@ void activationFunction2(vector<float> &arr)
 	{
 		activationFunction2(arr[i]);
 	}
+}
+
+void setBit(unsigned __int32 &val, int pos)
+{
+	__int32 mask = 1 << pos;
+	val |= mask;
+}
+
+void setCurrentTime()
+{
+	start_time = chrono::high_resolution_clock::now();
+}
+
+long long duration()
+{
+	auto end_time = chrono::high_resolution_clock::now();
+	auto duration = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
+	start_time = end_time;
+	return duration.count();
 }

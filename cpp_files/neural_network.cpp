@@ -1,113 +1,234 @@
-#include <algorithm>
 #include <iostream>
+#include <algorithm>
 #include "neural_network.h"
 #include "functions.h"
 
 using namespace std;
 
-NeuralNetwork::NeuralNetwork(int n_inputs) : n_inputs(n_inputs)
+int NeuralNetwork::count = 0;
+vector<NeuralNetwork *> NeuralNetwork::history = {};
+
+NeuralNetwork::NeuralNetwork(int n_inputs, NeuralNetwork *parent)
 {
-	weights[0] = zeros(n_inputs, n_neurons[0]);
-	weights[weights.size() - 1] = zeros(n_neurons[n_layers - 1], 2);
-	biases[biases.size() - 1] = zeros(2);
+	int l;
+	this->n_inputs = n_inputs;
+	type = 0;
 
-	for (int l = 0; l < n_layers-1; l++)
+	if (parent == nullptr)
 	{
-		weights[l+1] = zeros(n_neurons[l], n_neurons[l+1]);
+		// initialize parameters to 0
+		weights[0] = zeros(n_inputs, N_NEURONS[0]); // input weights
+		weights[weights.size() - 1] = zeros(N_NEURONS[N_LAYERS - 1], 2); // output weights
+		biases[biases.size() - 1] = zeros(2); // output biases
+
+		for (l = 1; l < N_LAYERS; l++)
+		{
+			weights[l] = zeros(N_NEURONS[l - 1], N_NEURONS[l]); // hidden layer weigths
+		}
+
+		for (l = 0; l < N_LAYERS; l++)
+		{
+			biases[l] = zeros(N_NEURONS[l]); // hidden layer biases
+		}
 	}
-	for (int l = 0; l < n_layers; l++)
+	else
 	{
-		biases[l] = zeros(n_neurons[l]);
+		// inherit parameters from the given brain
+		type = parent->type;
+		weights = parent->weights;
+		biases = parent->biases;
 	}
 
+	/*for (l = 0; l < N_LAYERS; l++)
+	{
+		if (weights[l].size() == 0)
+		{
+			cout << "constructor: " << endl;
+			cout << this << ": " << l << " " << weights[l].size() << endl;
+			cout << N_LAYERS << endl;
+			cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
+			cout << count << endl;
+		}
+	}*/
+
+	history.push_back(this);
+	count++;
 }
 
 vector<float> NeuralNetwork::outputs(vector<float> &inputs)
 {
+	// return the outputs using forward-propagation
 	vector<float> outputs;
 	outputs = vecSum(matMul(inputs, weights[0]), biases[0]);
 	activationFunction1(outputs);
 
-	for (int l = 1; l < n_layers + 1; l++)
+	for (int l = 1; l < N_LAYERS + 1; l++)
 	{
 		outputs = vecSum(matMul(outputs, weights[l]), biases[l]);
-		if (l != n_layers)
+		if (l != N_LAYERS)
 		{
-			activationFunction1(outputs);
+			activationFunction1(outputs); // apply activationFunction1 until last layer (not included)
 		}
 	}
 
-	activationFunction2(outputs);
+	activationFunction2(outputs); // last layer apply activationFunction2
 	return outputs;
+}
+
+int NeuralNetwork::getType()
+{
+	return type;
+}
+
+vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
+{
+	int layer, neuron, n_neurons, j, i, w, b;
+	unsigned __int32 val;
+	vector<unsigned __int32> encoded_info, encoded_w, encoded_b;
+
+	/*for (layer = 0; layer < N_LAYERS; layer++)
+	{
+		if (weights[layer].size() == 0)
+		{
+			cout << "getEncodedInfo: " << endl;
+			cout << this << ": " << layer << " " << weights[layer].size() << endl;
+			cout << N_LAYERS << endl;
+			cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
+			cout << count << endl;
+		}
+	}*/
+
+	//cout << "0";
+	for (layer = 0; layer < N_LAYERS + 1; layer++)
+	{
+		val = 0;
+		j = 0;
+		i = 0;
+
+		if (layer == 0) n_neurons = n_inputs;
+		else n_neurons = N_NEURONS[layer - 1];
+		//cout << "1";
+		for (neuron = 0; neuron < n_neurons; neuron++)
+		{
+			//cout << layer << " " << weights[layer].size() << " " << neuron << "|";
+			/*if (weights[layer].size() == 0)
+			{
+				cout << this << ": " << n_neurons << " " << layer << " " << weights[layer].size() << " " << neuron << endl;
+				cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
+				cout << count << endl;
+
+				cout << history.size() << endl;
+				cout << history[count - 1] << endl;
+				if (find(history.begin(), history.end(), this) != history.end())
+				{
+					cout << this << " is in the vector." << endl;
+				}
+				else
+				{
+					cout << this << " is not in the vector." << endl;
+				}
+			}*/
+			for (w = 0; w < weights[layer][neuron].size(); w++)
+			{
+				if (j == 32)
+				{
+					encoded_w.push_back(val);
+					val = 0;
+					j = 0;
+					i++;
+				}
+
+				if (weights[layer][neuron][w] != 0)
+				{
+					setBit(val, j);
+				}
+
+				j++;
+			}
+		}
+		//cout << "2";
+		while (i < 4)
+		{
+			encoded_w.push_back(val);
+			val = 0;
+			i++;
+		}
+
+		val = 0;
+		j = 0;
+
+		if (layer == N_LAYERS) n_neurons = 2;
+		else n_neurons = N_NEURONS[layer];
+		//cout << "3";
+		for (b = 0; b < biases[layer].size(); b++)
+		{
+			if (biases[layer][b] != 0)
+			{
+				setBit(val, j);
+			}
+
+			j++;
+		}
+		//cout << "4";
+		encoded_b.push_back(val);
+
+	}
+	//cout << "5";
+	encoded_info.reserve(encoded_w.size() + encoded_b.size());
+	encoded_info.insert(encoded_info.end(), encoded_w.begin(), encoded_w.end());
+	encoded_info.insert(encoded_info.end(), encoded_b.begin(), encoded_b.end());
+	//cout << "6";
+	return encoded_info;
 }
 
 void NeuralNetwork::mutate()
 {
-	int r, layer, row, col;
+	// randomize some random parameters
+	int i, r, layer, row, col;
 	vector<float> p = {.6,.2,.2};
 	vector<float> range = {0,1,2};
-	r = random_choices(range, p)[0];
-	cout << r;
+	vector<float> p_layers;
+	vector<float> range_layers;
+
+	for (i = 0; i < N_LAYERS + 1; i++)
+	{
+		range_layers.push_back(i);
+	}
+
+	r = randomChoice(range, p);
 
 	switch (r)
 	{
-	case 0:
-		layer = randint(0, n_layers);
+	case 0: // randomize a weight
+		p_layers = {.7,.15,.15};
+		layer = randomChoice(range_layers, p_layers);
 		row = randint(0, weights[layer].size() - 1);
 		col = randint(0, weights[layer][0].size() - 1);
-
-		cout << " Randomizing weight " << layer << " " << row << " " << col << endl;
 		randomizeWeight(layer, row, col);
-		cout << " Weight is: " << weights[layer][row][col] << endl;
-
 		break;
-	case 1:
-		layer = randint(0, n_layers);
-		row = randint(0, weights[layer].size() - 1);
-
-		cout << " Randomizing bias " << layer << " " << row << endl;
+	case 1: // randomize a bias
+		p_layers = {.4,.3,.3};
+		layer = randomChoice(range_layers, p_layers);
+		row = randint(0, biases[layer].size() - 1);
 		randomizeBias(layer, row);
-		cout << " Bias is: " << biases[layer][row] << endl;
-
 		break;
-	case 2:
+	case 2: // randomize a path of weights (from input to output)
 		row = randint(0, weights[0].size() - 1);
-		for (layer = 0; layer < n_layers + 1; layer++)
+		for (layer = 0; layer < N_LAYERS + 1; layer++)
 		{
 			col = randint(0, weights[layer][0].size() - 1);
-
-			cout << " Randomizing weight " << layer << " " << row << " " << col << endl;
 			randomizeWeight(layer, row, col);
-			cout << " Weight is: " << weights[layer][row][col] << endl;
 			row = col;
 		}
-
 		break;
 	default:
 		break;
 	}
 }
 
-void NeuralNetwork::show()
+void NeuralNetwork::setType(int new_type)
 {
-	for (int i = 0; i < weights.size(); i++)
-	{
-		for (int j = 0; j < weights[i].size(); j++)
-		{
-			for (int k = 0; k < weights[i][j].size(); k++)
-			{
-				cout << i << " " << j << " " << k << " " << weights[i][j][k] << endl;
-			}
-		}
-	}
-	for (int i = 0; i < biases.size(); i++)
-	{
-		cout << i << endl;
-		for (int j = 0; j < biases[i].size(); j++)
-		{
-			cout << i << " " << j << " " << biases[i][j] << endl;
-		}
-	}
+	type = new_type;
 }
 
 void NeuralNetwork::randomizeWeight(int layer, int row, int col)
@@ -117,5 +238,5 @@ void NeuralNetwork::randomizeWeight(int layer, int row, int col)
 
 void NeuralNetwork::randomizeBias(int layer, int row)
 {
-	biases[layer][row] = random(-1, 1);
+	biases[layer][row] = random(-0.5, 0.5);
 }
