@@ -81,7 +81,7 @@ void Prey::updateProperties()
 	{
 		rest = false; // rest mode to OFF if achieved minimum rest 
 	}
-	if (rest)
+	if (spd == 0)
 	{
 		setEnergy(energy + energy_recovery); // recover energy if in rest mode
 	}
