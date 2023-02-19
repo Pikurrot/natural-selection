@@ -2,9 +2,6 @@
 *.vcxproj
 *.filters
 *.user
-Debug
 __pycache__
-.vs
-x64
 python_files/NN_visualizer.py
 python_files/natural_selection_(outdated).py
