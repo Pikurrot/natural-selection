@@ -39,18 +39,6 @@ NeuralNetwork::NeuralNetwork(int n_inputs, NeuralNetwork *parent)
 		biases = parent->biases;
 	}
 
-	/*for (l = 0; l < N_LAYERS; l++)
-	{
-		if (weights[l].size() == 0)
-		{
-			cout << "constructor: " << endl;
-			cout << this << ": " << l << " " << weights[l].size() << endl;
-			cout << N_LAYERS << endl;
-			cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
-			cout << count << endl;
-		}
-	}*/
-
 	history.push_back(this);
 	count++;
 }
@@ -86,19 +74,6 @@ vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
 	unsigned __int32 val;
 	vector<unsigned __int32> encoded_info, encoded_w, encoded_b;
 
-	/*for (layer = 0; layer < N_LAYERS; layer++)
-	{
-		if (weights[layer].size() == 0)
-		{
-			cout << "getEncodedInfo: " << endl;
-			cout << this << ": " << layer << " " << weights[layer].size() << endl;
-			cout << N_LAYERS << endl;
-			cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
-			cout << count << endl;
-		}
-	}*/
-
-	//cout << "0";
 	for (layer = 0; layer < N_LAYERS + 1; layer++)
 	{
 		val = 0;
@@ -107,27 +82,9 @@ vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
 
 		if (layer == 0) n_neurons = n_inputs;
 		else n_neurons = N_NEURONS[layer - 1];
-		//cout << "1";
+
 		for (neuron = 0; neuron < n_neurons; neuron++)
 		{
-			//cout << layer << " " << weights[layer].size() << " " << neuron << "|";
-			/*if (weights[layer].size() == 0)
-			{
-				cout << this << ": " << n_neurons << " " << layer << " " << weights[layer].size() << " " << neuron << endl;
-				cout << weights.size() << " " << weights[0].size() << " " << weights[1].size() << " " << weights[2].size() << endl;
-				cout << count << endl;
-
-				cout << history.size() << endl;
-				cout << history[count - 1] << endl;
-				if (find(history.begin(), history.end(), this) != history.end())
-				{
-					cout << this << " is in the vector." << endl;
-				}
-				else
-				{
-					cout << this << " is not in the vector." << endl;
-				}
-			}*/
 			for (w = 0; w < weights[layer][neuron].size(); w++)
 			{
 				if (j == 32)
@@ -146,7 +103,7 @@ vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
 				j++;
 			}
 		}
-		//cout << "2";
+
 		while (i < 4)
 		{
 			encoded_w.push_back(val);
@@ -159,7 +116,7 @@ vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
 
 		if (layer == N_LAYERS) n_neurons = 2;
 		else n_neurons = N_NEURONS[layer];
-		//cout << "3";
+
 		for (b = 0; b < biases[layer].size(); b++)
 		{
 			if (biases[layer][b] != 0)
@@ -169,15 +126,15 @@ vector<unsigned __int32> NeuralNetwork::getEncodedInfo()
 
 			j++;
 		}
-		//cout << "4";
+
 		encoded_b.push_back(val);
 
 	}
-	//cout << "5";
+
 	encoded_info.reserve(encoded_w.size() + encoded_b.size());
 	encoded_info.insert(encoded_info.end(), encoded_w.begin(), encoded_w.end());
 	encoded_info.insert(encoded_info.end(), encoded_b.begin(), encoded_b.end());
-	//cout << "6";
+
 	return encoded_info;
 }
 

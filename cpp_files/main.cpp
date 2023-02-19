@@ -22,7 +22,7 @@ int main()
 
 	N = 30000;
 
-	file_num = "2";
+	file_num = "1";
 	sim_file.open("simulations/simulation" + file_num + ".bin", ios::binary);
 	brains_file.open("simulations/neural_nets" + file_num + ".bin", ios::binary);
 

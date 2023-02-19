@@ -1,6 +1,6 @@
 import numpy as np
 import pygame
-from math import pi, sin, cos, sqrt, atan2
+from math import sqrt
 from abc import ABC, abstractmethod
 
 def sign(x):
@@ -231,7 +231,7 @@ def update_screen(tick):
 	draw_interface(tick)
 	pygame.display.update()
 
-file_num = "2"
+file_num = "0"
 # read raw data
 with open("simulations/simulation" + file_num + ".bin", "rb") as sim_file:
 	binary_data = sim_file.read()

@@ -5,8 +5,6 @@
 Debug
 __pycache__
 .vs
-images
 x64
-simulations
 python_files/NN_visualizer.py
 python_files/natural_selection_(outdated).py

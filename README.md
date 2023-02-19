@@ -17,8 +17,9 @@ Prey are represented as green dots. The field of view of a prey, represented as 
 
 The properties of prey are as follows:
 - A wide yet short field of view
-- The split charge restores over time. Once it has reached a certain period, they split.
-- When their energy drops to 0, they must rest and not move until they have reached a minimum level of energy.
+- The split charge restores over time. Once it has reached a certain period, they split
+- When their energy drops to 0, they must rest and not move until they have reached a minimum level of energy
+- They can also move backwards
 
 ## Predators
 Predators are represented as red dots, and their field of view is shown in the next image.
@@ -30,7 +31,8 @@ The properties of predators are as follows:
 - The ability to eat prey, recover energy, and fill their split charge
 - The split charge empties over time
 - When their energy drops to 0, they die
-- After eating, they have a digestion period during which they cannot restore energy or split charge. This is to prevent massive and pointless over-reproduction of predators when hunting large prey colonies.
+- After eating, they have a digestion period during which they cannot restore energy or split charge. This is to prevent massive and pointless over-reproduction of predators when hunting large prey colonies
+- They can only move forward
 
 ## Neural network
 All entities possess an artificial neural network as their brain. The inputs to the network are the lidar rays of the field of view, and the outputs are the entity's speed and angular velocity. The neural network has weights (represented in orange if w > 0), biases (the neuron is filled if b > 0), and activation functions (tanh).
@@ -79,3 +81,39 @@ Here are some observations made during the simulation:
 # Conclusion
 Survival in this environment is a daunting task, and in most simulations, the entities do not overcome the second crisis. The constant parameters such as energy depletion, maximum speed, and field of view range have been meticulously adjusted to enhance survival. However, after numerous simulations, the pattern described above remains consistent. The best-adapted individuals that can cope with the prevailing conditions tend to survive longer.
 > "It is not the strongest of the species that survives, nor the most intelligent that survives. It is the one that is the most adaptable to change." - Charles Darwin
+
+# How to run the simulator
+The project has been done in 2 languages: C++ for running and building the simulation, and Python for visualizing it in a vide-like format. You can visualize an already run simulation, run a new simulation with fixed parameters, or adjust the parameters, build and run the simulation.
+
+## Visualize an already run simulation
+### Requirements
+Apart from Python 3, the following python libraries are required to be installed:
+- numpy (1.19.5)
+- pygame (2.1.2)
+### Steps
+1. Go to `python_files/` directory.
+2. Run the `natural_selection_interface.py` program with python.
+3. A pygame window, named "Simulation", should open. Here you can visualize the simulation.
+
+## Run a new simulation with fixed parameters
+### Requirements
+- The same as in "Visualize an already run simulation".
+### Steps
+1. Run `Natural-Selection-Proj.exe` to run a new simulation. This might take a few minutes, depending on the computer.
+2. The simulation will be automatically saved in `simulations/` in 2 files: `simulation1.bin` and `neural_nets1.bin`. So open `python_files/natural_selection_interface.py` to edit the code and change the `file_num` to `"1"` in line 234.
+3. Run `natural_selection_interface.py` again to visualize the new simulation.
+
+## Adjust the parameters, build and run a new simulation
+### Requirements
+- C++ installed, as well as the compiler.
+- An IDE (such as Visual Studio) to edit the code, build and compile the project.
+- The same as in "Visualize an already run simulation".
+### Steps
+1. Open the repository folder with the IDE and access the `cpp_files/`.
+2. Edit the parameters you want. These are found in `entity.h`, `prey.h`, `predator.h`, `neural_network.h` and `main.cpp`. In the header files, the parameters are the ones that are `static` in the class declaration.
+3. You can optionally change the `file_num` parameter in `main.cpp` and in `python_files/natural_selection_interface.py`, so that the simulation is saved in another file instead of replacing the old ones. You will also have to create a new `simulation<x>.bin` and `neural_nets<x>.bin` in the `simulations/` folder. For example, if `file_num = 2`, then name the files `simulation2.bin` and `neural_nets2.bin`.
+4. Build and compile the project. Find the `Natural-Selection-Proj.exe` file (probably in `x64/Debug/`), copy it and paste it to the repository folder, replacing the old one.
+5. Do the same as in "Run a new simulation with fixed parameters".
+
+# References
+[Evolving AIs - Predator vs Prey, who will win?](https://www.youtube.com/watch?v=qwrp3lB-jkQ)

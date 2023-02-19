@@ -5,7 +5,6 @@
 #include <random>
 #include <iostream>
 #include <string>
-#include <Eigen/Dense>
 #include <chrono>
 #include "constants.h"
 #include "functions.h"
@@ -126,7 +125,6 @@ float ang(float x1, float y1, float x2, float y2)
 
 void activationFunction1(float &x)
 {
-	// x = 1/(1+pow(M_E,-x));
 	float a = 2.5;
 	x = (pow(a, x) - pow(a, -x)) / (pow(a, x) + pow(a, -x));
 }
