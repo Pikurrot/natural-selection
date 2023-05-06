@@ -5,3 +5,5 @@
 __pycache__
 python_files/NN_visualizer.py
 python_files/natural_selection_(outdated).py
+.vs
+x64
